@@ -4,6 +4,7 @@ import random
 import sys
 import math
 from pygame import mixer
+import time
 
 #Initializers for pygame and mixer libraries
 mixer.init()
@@ -21,7 +22,7 @@ mixer.music.play(-1)
 #Sets the size of the game window
 length = 800
 width = 600
-
+t_end = time.time() + 10
 
 text_color = (0,255,0)
 player_color = (0,255,255)
@@ -30,6 +31,7 @@ player_pos = [400,575]
 player_speed = 7
 background_colour = (0,0,0)
 pygame.key.set_repeat(10,10)
+player_powerup = ["Once"]
 
 num_enemies = 10
 enemy_color = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
@@ -57,7 +59,7 @@ level = 1
 
 clock = pygame.time.Clock()
 
-myFont = pygame.font.SysFont("monospace",35)
+myFont = pygame.font.SysFont("Comic Sans MS",35)
 
 #Functions for game entity movement
 def drop_enemies(enemy_list):
@@ -69,7 +71,7 @@ def drop_enemies(enemy_list):
 
 def drop_powerups(power_list):
     delay = random.random()
-    if len(power_list) < num_powerups and delay < 0.075:
+    if len(power_list) < num_powerups and delay < 0.001:
         x_pos = random.randint(0,length-power_rad)
         y_pos = 0
         power_list.append([x_pos,y_pos])
@@ -108,17 +110,25 @@ def number_enemies(level,num_enemies):
 
     return num_enemies
 
-#Functions to draw in game entities
+
+###Functions to draw in game entities###
+
+#This function draws the enemy by taking in the: surface drawn on, color, position(x,y), and the radius and draws a circle until the maximum number of enemies are drawn
 def draw_enemies(enemy_list):
     for enemy_pos in enemy_list:
         pygame.draw.circle(screen, enemy_color, enemy_pos, enemy_rad)
 
+#This function draws the enemy by taking in the: surface drawn on, color, position(x,y), and the radius and draws a circle until the maximum number of enemies are drawn
 def draw_powerups(power_list):
-    for enemy_pos in enemy_list:
-        power_colour = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
+    for power_pos in power_list:
+        power_color = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
         pygame.draw.circle(screen, power_color, power_pos, power_rad)
 
-#Functions to update game entity positions
+
+
+###Functions to update game entity positions###
+
+#This function checks to see if power up are on the screen.  If the power up is on screen its position is updated. Otherwise, it is removed from the list
 def update_powerups(power_list):
     for idx, power_pos in enumerate(power_list):
         if power_pos[1] >= 0 and (power_pos[1]+power_rad) < length:
@@ -126,6 +136,7 @@ def update_powerups(power_list):
         else:
             power_list.pop(idx)
 
+#This function checks to see if enemies are on the screen.  If the enemy is on screen its position is updated. Otherwise, it is removed from the list
 def update_enemy_positions(enemy_list, score):
     for idx, enemy_pos in enumerate(enemy_list):
         if enemy_pos[1] >= 0 and (enemy_pos[1]+enemy_rad) < length:
@@ -136,23 +147,15 @@ def update_enemy_positions(enemy_list, score):
     return score
 
 
-#Functions to evaluate collision checks between player and game entities
+###Functions to evaluate collision checks between player and game entities###
+
+#The position of all the enemies on the screen is taken. For each enemy, checks whether any enemy collided with the player.
 def collision_check(enemy_list, player_pos):
     for enemy_pos in enemy_list:
         if detectCollision(player_pos, enemy_pos):
             return True
     return False
 
-def detectCollision(player_pos, enemy_pos):
-    p_x = player_pos[0]
-    p_y = player_pos[1]
-
-    e_x = enemy_pos[0]
-    e_y = enemy_pos[1]
-
-    if (math.sqrt((e_x-p_x)**2+(e_y-p_y)**2) <=collision_rad):
-        return True
-    return False
 
 def power_collision_check(power_list, player_pos):
     for power_pos in power_list:
@@ -160,16 +163,27 @@ def power_collision_check(power_list, player_pos):
             return True
     return False
 
-def powerup_collision(player_pos, power_pos):
+#The position of the enemies and player are calculated relative to each other to check whether they have collided
+def detectCollision(player_pos, enemy_pos):
     p_x = player_pos[0]
     p_y = player_pos[1]
 
-    pu_x = enemy_pos[0]
-    pu_y = enemy_pos[1]
+    e_x = enemy_pos[0]
+    e_y = enemy_pos[1]
 
-    if (math.sqrt((pu_x-p_x)**2+(pu_y-p_y)**2) <=powercollision_rad):
+    if (math.sqrt((e_x-p_x)**2+(e_y-p_y)**2)+int(score/20) <=collision_rad):
         return True
+    return False
 
+def powerup_collision(player_pos, power_pos):
+    p1_x = player_pos[0]
+    p1_y = player_pos[1]
+
+    pu_x = power_pos[0]
+    pu_y = power_pos[1]
+
+    if (math.sqrt((pu_x-p1_x)**2+(pu_y-p1_y)**2) <=powercollision_rad):
+        return True
     return False
 
 
@@ -203,28 +217,59 @@ while not game_over:
 
             player_pos = [x,y]
 
-
-
     screen.fill(background_colour)
 
-    if powerup_collision(power_pos, player_pos):
-        get_power = True
+    clock.tick(60)
 
-    clock.tick(30)
-    power = powerup_collision(player_pos, power_pos)
-    num_enemies = number_enemies(level,num_enemies)
+
     drop_enemies(enemy_list)
+    draw_enemies(enemy_list)
+
+    if level >= 2:
+        drop_powerups(power_list)
+        draw_powerups(power_list)
+        update_powerups(power_list)
+
+    num_enemies = number_enemies(level,num_enemies)
+
     score = update_enemy_positions(enemy_list, score)
+
+
+
     speed = set_level(score, speed)
     level = display_level(score, level)
+
+
+
     text_level = "Level: " + str(level)
     text = "Score: " + str(score)
+
     label = myFont.render(text, 1, text_color)
     label_level = myFont.render(text_level, 1, text_color)
-    screen.blit(label, (length-250,width-35))
-    screen.blit(label_level, (length-250,(width - 70)))
-    if collision_check(enemy_list, player_pos):
-        game_over = True
-    draw_enemies(enemy_list)
+
+    screen.blit(label, (length-200,width-40))
+    screen.blit(label_level, (length-200,(width - 80)))
+
+
+    if powerup_collision(player_pos, power_pos):
+
+        power_num = random.randint(1, 2)
+        if power_num == 1:
+            if not player_color == (255,255,0):
+                player_color = (255,0,0)
+
+        if power_num == 2:
+            if not player_color == (255,0,0):
+                player_color = (255,255,0)
+                if player_color == (255,255,0):
+                    player_speed = int(speed*2)
+
+    if player_color == (255,0,0):
+         if collision_check(enemy_list, player_pos):
+            game_over = False
+    else:
+        if collision_check(enemy_list, player_pos):
+            game_over = True
+
     player = pygame.draw.circle(screen, player_color , (player_pos[0],player_pos[1]) , player_rad)
     pygame.display.update()
