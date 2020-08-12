@@ -29,9 +29,9 @@ player_color = (0,255,255)
 player_rad = 15
 player_pos = [400,575]
 player_speed = 7
-background_colour = (0,0,0)
+background_color = (0,0,0)
 pygame.key.set_repeat(10,10)
-player_powerup = ["Once"]
+
 
 num_enemies = 10
 enemy_color = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
@@ -43,9 +43,8 @@ num_powerups = 1
 power_pos = [random.randint(0,length), 0]
 power_list = [power_pos]
 power_rad = 10
-power_colour = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
+power_color = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
 speed_powerup = 10
-
 
 
 speed = 10
@@ -69,9 +68,9 @@ def drop_enemies(enemy_list):
         y_pos = 0
         enemy_list.append([x_pos,y_pos])
 
-def drop_powerups(power_list):
+def drop_powerups(power_list, player_color):
     delay = random.random()
-    if len(power_list) < num_powerups and delay < 0.001:
+    if len(power_list) < num_powerups and delay < 0.001 and player_color == (0,255,255):
         x_pos = random.randint(0,length-power_rad)
         y_pos = 0
         power_list.append([x_pos,y_pos])
@@ -171,7 +170,7 @@ def detectCollision(player_pos, enemy_pos):
     e_x = enemy_pos[0]
     e_y = enemy_pos[1]
 
-    if (math.sqrt((e_x-p_x)**2+(e_y-p_y)**2)+int(score/20) <=collision_rad):
+    if (math.sqrt((e_x-p_x)**2+(e_y-p_y)**2)+int(score/40) <=collision_rad):
         return True
     return False
 
@@ -183,12 +182,9 @@ def powerup_collision(player_pos, power_pos):
     pu_y = power_pos[1]
 
     if (math.sqrt((pu_x-p1_x)**2+(pu_y-p1_y)**2) <=powercollision_rad):
+        power_pos[1] = 1000
         return True
     return False
-
-
-
-
 
 #Main Loop that runs the game
 while not game_over:
@@ -217,18 +213,18 @@ while not game_over:
 
             player_pos = [x,y]
 
-    screen.fill(background_colour)
+    screen.fill(background_color)
 
-    clock.tick(60)
+    clock.tick(45)
 
 
     drop_enemies(enemy_list)
     draw_enemies(enemy_list)
 
-    if level >= 2:
-        drop_powerups(power_list)
-        draw_powerups(power_list)
-        update_powerups(power_list)
+
+    drop_powerups(power_list, player_color)
+    draw_powerups(power_list)
+    update_powerups(power_list)
 
     num_enemies = number_enemies(level,num_enemies)
 
@@ -258,11 +254,14 @@ while not game_over:
             if not player_color == (255,255,0):
                 player_color = (255,0,0)
 
+
         if power_num == 2:
             if not player_color == (255,0,0):
                 player_color = (255,255,0)
                 if player_color == (255,255,0):
                     player_speed = int(speed*2)
+
+
 
     if player_color == (255,0,0):
          if collision_check(enemy_list, player_pos):
@@ -270,6 +269,10 @@ while not game_over:
     else:
         if collision_check(enemy_list, player_pos):
             game_over = True
+
+    powerup_time = random.random()
+    if powerup_time < 0.008:
+        player_color = (0,255,255)
 
     player = pygame.draw.circle(screen, player_color , (player_pos[0],player_pos[1]) , player_rad)
     pygame.display.update()
