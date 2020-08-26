@@ -1,3 +1,5 @@
+#Player/Ufo image taken from: Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
+
 #Importing Libraries required for Game
 import pygame
 import random
@@ -11,9 +13,10 @@ mixer.init()
 pygame.init()
 
 #Visuals for game window
-icon = pygame.image.load(".\\assets\\download.png")
+icon = pygame.image.load(".\\assets\\moon.png")
 pygame.display.set_icon(icon)
 pygame.display.set_caption("Brave the Storm")
+background = pygame.image.load(".\\assets\\space.jpg")
 
 #Background music for the game
 mixer.music.load(".\\assets\\a.mp3")
@@ -21,36 +24,28 @@ mixer.music.play(-1)
 
 #Sets the size of the game window
 length = 800
-width = 600
-t_end = time.time() + 10
+height = 600
 
-text_color = (0,255,0)
-player_color = (0,255,255)
-player_rad = 15
-player_pos = [400,575]
-player_speed = 7
-background_color = (0,0,0)
-pygame.key.set_repeat(10,10)
-
-
+enemy_size = 64
 num_enemies = 10
-enemy_color = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
 enemy_rad = 50
 enemy_pos = [random.randint(0,length), 0]
 enemy_list = [enemy_pos]
-
-num_powerups = 1
-power_pos = [random.randint(0,length), 0]
-power_list = [power_pos]
-power_rad = 10
-power_color = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
-speed_powerup = 10
-
-
 speed = 10
-screen = pygame.display.set_mode((length,width))
-collision_rad = player_rad + enemy_rad
-powercollision_rad = player_rad + power_rad
+
+text_color = (0,255,0)
+
+playerImg = pygame.image.load(".\\assets\\spaceship.png")
+enemyImg = pygame.image.load(".\\assets\\asteroid.png")
+
+
+player_size = 64
+player_pos = [400,575]
+player_speed = int(.75*speed)
+background_color = (0,0,0)
+pygame.key.set_repeat(10,10)
+
+screen = pygame.display.set_mode((length,height))
 
 game_over = False
 score = 0
@@ -60,7 +55,16 @@ clock = pygame.time.Clock()
 
 myFont = pygame.font.SysFont("Comic Sans MS",35)
 
-#Functions for game entity movement
+def player():
+    screen.blit(playerImg, player_pos)
+
+def draw_enemies(enemy_list):
+    for enemy_pos in enemy_list:
+        screen.blit(enemyImg, enemy_pos)
+
+###Functions for game entity movement
+
+#This function drops enemies randomly from the top of the screen if the number of enemies spawned is less than the limit
 def drop_enemies(enemy_list):
     delay = random.random()
     if len(enemy_list) < num_enemies and delay < 0.075:
@@ -68,14 +72,9 @@ def drop_enemies(enemy_list):
         y_pos = 0
         enemy_list.append([x_pos,y_pos])
 
-def drop_powerups(power_list, player_color):
-    delay = random.random()
-    if len(power_list) < num_powerups and delay < 0.001 and player_color == (0,255,255):
-        x_pos = random.randint(0,length-power_rad)
-        y_pos = 0
-        power_list.append([x_pos,y_pos])
+###Functions for main game functions
 
-#Functions for main game functions
+#This function creates a level system based on the score the player has obtained
 def display_level(score, level):
     if score < 50:
         level = 1
@@ -89,12 +88,14 @@ def display_level(score, level):
         level = 5
     return level
 
-def set_level(score, speed):
+#This function increases the speed of the enemies increasing the difficulty as the player achieves a higher score
+def set_difficulty(score, speed):
 
     speed = score/5 + 5
 
     return speed
 
+#This function increases the number of enemies dropping at a time increasing the difficulty as the player reaches a higher level/score
 def number_enemies(level,num_enemies):
     if level == 1:
         num_enemies = 10
@@ -110,30 +111,7 @@ def number_enemies(level,num_enemies):
     return num_enemies
 
 
-###Functions to draw in game entities###
-
-#This function draws the enemy by taking in the: surface drawn on, color, position(x,y), and the radius and draws a circle until the maximum number of enemies are drawn
-def draw_enemies(enemy_list):
-    for enemy_pos in enemy_list:
-        pygame.draw.circle(screen, enemy_color, enemy_pos, enemy_rad)
-
-#This function draws the enemy by taking in the: surface drawn on, color, position(x,y), and the radius and draws a circle until the maximum number of enemies are drawn
-def draw_powerups(power_list):
-    for power_pos in power_list:
-        power_color = [random.randint(1,255),random.randint(1,255),random.randint(1,255)]
-        pygame.draw.circle(screen, power_color, power_pos, power_rad)
-
-
-
 ###Functions to update game entity positions###
-
-#This function checks to see if power up are on the screen.  If the power up is on screen its position is updated. Otherwise, it is removed from the list
-def update_powerups(power_list):
-    for idx, power_pos in enumerate(power_list):
-        if power_pos[1] >= 0 and (power_pos[1]+power_rad) < length:
-            power_pos[1] += int(speed/2)
-        else:
-            power_list.pop(idx)
 
 #This function checks to see if enemies are on the screen.  If the enemy is on screen its position is updated. Otherwise, it is removed from the list
 def update_enemy_positions(enemy_list, score):
@@ -155,13 +133,6 @@ def collision_check(enemy_list, player_pos):
             return True
     return False
 
-
-def power_collision_check(power_list, player_pos):
-    for power_pos in power_list:
-        if powerup_collision(player_pos, power_pos):
-            return True
-    return False
-
 #The position of the enemies and player are calculated relative to each other to check whether they have collided
 def detectCollision(player_pos, enemy_pos):
     p_x = player_pos[0]
@@ -170,24 +141,21 @@ def detectCollision(player_pos, enemy_pos):
     e_x = enemy_pos[0]
     e_y = enemy_pos[1]
 
-    if (math.sqrt((e_x-p_x)**2+(e_y-p_y)**2)+int(score/40) <=collision_rad):
-        return True
+    if (e_x >= p_x and e_x < (p_x + player_size)) or (p_x >= e_x and p_x < (e_x+enemy_size)):
+        if (e_y >= p_y and e_y < (p_y + player_size)) or (p_y >= e_y and p_y < (e_y+enemy_size)):
+            return True
     return False
 
-def powerup_collision(player_pos, power_pos):
-    p1_x = player_pos[0]
-    p1_y = player_pos[1]
+#Main Menu
 
-    pu_x = power_pos[0]
-    pu_y = power_pos[1]
 
-    if (math.sqrt((pu_x-p1_x)**2+(pu_y-p1_y)**2) <=powercollision_rad):
-        power_pos[1] = 1000
-        return True
-    return False
 
 #Main Loop that runs the game
 while not game_over:
+
+    screen.fill(background_color)
+    screen.blit(background, (0,0))
+
     for event in pygame.event.get():
 
         if event.type == pygame.QUIT:
@@ -199,43 +167,31 @@ while not game_over:
             y = player_pos[1]
 
             if event.key == pygame.K_UP:
-                if player_pos[1] > (player_rad):
+                if player_pos[1] >= 64:
                     y -= player_speed
             elif event.key == pygame.K_DOWN:
-                if player_pos[1] < (width-player_rad):
+                if player_pos[1] <= 536:
                     y += player_speed
             elif event.key == pygame.K_RIGHT:
-                if player_pos[0] < (length-player_rad):
+                if player_pos[0] <= 736:
                     x += player_speed
             elif event.key == pygame.K_LEFT:
-                if player_pos[0] > (player_rad):
+                if player_pos[0] >= 0:
                     x -= player_speed
 
             player_pos = [x,y]
 
-    screen.fill(background_color)
+    player()
 
-    clock.tick(45)
-
+    clock.tick(30)
 
     drop_enemies(enemy_list)
     draw_enemies(enemy_list)
 
-
-    drop_powerups(power_list, player_color)
-    draw_powerups(power_list)
-    update_powerups(power_list)
-
     num_enemies = number_enemies(level,num_enemies)
-
     score = update_enemy_positions(enemy_list, score)
-
-
-
-    speed = set_level(score, speed)
+    speed = set_difficulty(score, speed)
     level = display_level(score, level)
-
-
 
     text_level = "Level: " + str(level)
     text = "Score: " + str(score)
@@ -243,36 +199,10 @@ while not game_over:
     label = myFont.render(text, 1, text_color)
     label_level = myFont.render(text_level, 1, text_color)
 
-    screen.blit(label, (length-200,width-40))
-    screen.blit(label_level, (length-200,(width - 80)))
+    screen.blit(label, (length-200,height-40))
+    screen.blit(label_level, (length-200,(height - 80)))
 
+    if collision_check(enemy_list, player_pos):
+        game_over = True
 
-    if powerup_collision(player_pos, power_pos):
-
-        power_num = random.randint(1, 2)
-        if power_num == 1:
-            if not player_color == (255,255,0):
-                player_color = (255,0,0)
-
-
-        if power_num == 2:
-            if not player_color == (255,0,0):
-                player_color = (255,255,0)
-                if player_color == (255,255,0):
-                    player_speed = int(speed*2)
-
-
-
-    if player_color == (255,0,0):
-         if collision_check(enemy_list, player_pos):
-            game_over = False
-    else:
-        if collision_check(enemy_list, player_pos):
-            game_over = True
-
-    powerup_time = random.random()
-    if powerup_time < 0.008:
-        player_color = (0,255,255)
-
-    player = pygame.draw.circle(screen, player_color , (player_pos[0],player_pos[1]) , player_rad)
     pygame.display.update()
