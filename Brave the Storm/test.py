@@ -19,48 +19,35 @@ mixer.music.play(-1)
 #Visuals for game window
 icon = pygame.image.load(".\\assets\\moon.png")
 pygame.display.set_icon(icon)
-pygame.display.set_caption("Space Evade")
+pygame.display.set_caption("Brave the Storm")
 background = pygame.image.load(".\\assets\\space.jpg")
 
 #Settings for text displayed on screen
 myFont = pygame.font.SysFont("Comic Sans MS",35)
-myFont2 = pygame.font.SysFont("Comic Sans MS",80)
-text_color = (255,255,255)
+text_color = (0,255,0)
 
 #Sets the size of the game window
 length = 800
 height = 600
 screen = pygame.display.set_mode((length,height))
 
+
+
+
 #Main Menu
 def mainMenu():
     menu = True
 
     while menu:
-        screen.blit(background, (0,0))
-
-        mouse = pygame.mouse.get_pos()
-        clicked = pygame.mouse.get_pressed()
-        pygame.draw.rect(screen, (130,128,128), (300, 450, 200, 50))
-        botton1 = myFont.render("Start", 1, (0,0,0))
-        screen.blit(botton1, (350, 450))
-        title = myFont2.render("Space Evade", 1, (255,255,255))
-        screen.blit(title, (180, 200))
 
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
                 sys.exit()
 
-        if 300+200 > mouse[0] > 300 and 450+50 > mouse[1] > 450:
-            pygame.draw.rect(screen, (255,0,0), (300, 450, 200, 50), 2)
-            if clicked[0] == 1:
-                mainGame()
-        else:
-            pygame.draw.rect(screen, (0,0,0), (300, 450, 200, 50), 2)
 
-        pygame.display.update()
-#Function that contains all game functionability
+#Main Loop that runs the game
+
 def mainGame():
 
     #Main game functions e.g - level, score
@@ -72,15 +59,15 @@ def mainGame():
     #Enemy initializers
     enemyImg = pygame.image.load(".\\assets\\asteroid.png")
     enemy_size = 60 - score/5
-    num_enemies = 1
-    enemy_pos = [random.randint(0,length-enemy_size), 0]
+    num_enemies = 10
+    enemy_pos = [random.randint(0,length), 0]
     enemy_list = [enemy_pos]
     enemy_speed = 10
 
     #Player initializers
     playerImg = pygame.image.load(".\\assets\\spaceship.png")
     player_size = 64
-    player_pos = [length/2-32, int(height-2*player_size)]
+    player_pos = [400,575]
     player_speed = int(.75*enemy_speed)
     pygame.key.set_repeat(10,10)
 
@@ -180,7 +167,6 @@ def mainGame():
                 return True
         return False
 
-    #Main game loop
     while not game_over:
 
         screen.blit(background, (0,0))
@@ -235,5 +221,4 @@ def mainGame():
 
         pygame.display.update()
 
-mainMenu()
 mainGame()
