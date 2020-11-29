@@ -25,6 +25,7 @@ background = pygame.image.load(".\\assets\\space.jpg")
 #Settings for text displayed on screen
 myFont = pygame.font.SysFont("Comic Sans MS",35)
 myFont2 = pygame.font.SysFont("Comic Sans MS",80)
+myFont3 = pygame.font.SysFont("Comic Sans MS", 20)
 text_color = (255,255,255)
 
 #Sets the size of the game window
@@ -232,8 +233,64 @@ def mainGame():
 
         if collision_check(enemy_list, player_pos):
             game_over = True
+            endScreen(level,score)
 
         pygame.display.update()
 
+def endScreen(level, score):
+    endGame = True
+
+    if level == 1:
+        disLevel = myFont3.render(str(level),1,(255,0,0))
+    if level == 2:
+        disLevel = myFont3.render(str(level),1,(255,255,0))
+    if level == 3:
+        disLevel = myFont3.render(str(level),1,(255,128,0))
+    if level == 4:
+        disLevel = myFont3.render(str(level),1,(204,255,153))
+    else:
+        disLevel = myFont3.render(str(level),1,(0,255,0))
+
+    #if score <=:
+
+
+    while endGame:
+        screen.blit(background, (0,0))
+
+        mouse = pygame.mouse.get_pos()
+        clicked = pygame.mouse.get_pressed()
+        pygame.draw.rect(screen, (130,128,128), (175, 450, 200, 50))
+        pygame.draw.rect(screen, (130,128,128), (425,450,200,50))
+        button1 = myFont.render("Yes", 1, (0,0,0))
+        button2 = myFont.render("No", 1, (0,0,0))
+        screen.blit(button1, (250, 450))
+        screen.blit(button2, (505,450))
+        title = myFont2.render("GAME OVER!", 1, (255,255,255))
+        displayScore= myFont3.render("You reached level:     with a score of " +str(score),1,(255,255,255))
+        subT= myFont3.render("Would you like to play again?",1,(255,255,255))
+        screen.blit(title, (160, 50))
+        screen.blit(displayScore, (220,150))
+        screen.blit(subT,(260,175))
+        screen.blit(disLevel,(395,150))
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+        if 175+200 > mouse[0] > 175 and 425+50 > mouse[1] > 425:
+            pygame.draw.rect(screen, (255,0,0), (175, 450, 200,50), 2)
+            pygame.draw.rect(screen, (0,0,0), (425, 450, 200, 50), 2)
+            if clicked[0] == 1:
+                mainGame()
+        elif 425+200 > mouse[0] > 425 and 425+50 > mouse[1] > 425:
+            pygame.draw.rect(screen, (255,0,0), (425,450,200,50), 2)
+            pygame.draw.rect(screen, (0,0,0), (175, 450, 200, 50), 2)
+            if clicked[0]==1:
+                sys.exit()
+        else:
+            pygame.draw.rect(screen, (0,0,0), (425, 450, 200, 50), 2)
+            pygame.draw.rect(screen, (0,0,0), (175, 450, 200, 50), 2)
+        pygame.display.update()
+
 mainMenu()
-mainGame()
